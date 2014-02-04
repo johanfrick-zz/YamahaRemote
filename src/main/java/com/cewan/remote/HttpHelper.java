@@ -1,4 +1,4 @@
-package com.cewan.service;
+package com.cewan.remote;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
