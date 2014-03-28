@@ -16,6 +16,58 @@ public class Remote {
     @Value("${host:http://192.168.0.86}")
     private String host;
 
+
+    public String post(String operation) {
+        return httpHelper.doPost(host + URL, operation);
+    }
+
+
+    public void asyncSelectRadio(final int station) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                station(station);
+            }
+        }).start();
+    }
+
+
+    public Status getStatus() {
+        Status status = parseBasicStatus(post(basicStatus()));
+        parseRadioStatus(post(radioStatus()), status);
+        return status;
+    }
+
+    public void asyncVolume(final VolumeOperation op, final Integer dB) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                volume(op, dB);
+            }
+        }).start();
+
+    }
+
+    public void asyncSelectInput(final String source) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                input(source);
+                //once more since sometimes av decides to go back to some other source
+                sleep(2);
+                input(source);
+            }
+        }).start();
+    }
+
+    private void sleep(int seconds) {
+        try {
+            Thread.sleep(seconds * 1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void input(String source) {
         Status status = powerOn();
         while (!status.getInput().equals(source)) {
@@ -69,57 +121,5 @@ public class Remote {
             sleep(2);
         }
         post(radioListItem(station));
-    }
-
-
-    public String post(String operation) {
-        return httpHelper.doPost(host + URL, operation);
-    }
-
-
-    public void asyncSelectInput(final String source) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                input(source);
-                //once more since sometimes av decides to go back to some other source
-                sleep(2);
-                input(source);
-            }
-        }).start();
-    }
-
-    public void asyncSelectRadio(final int station) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                station(station);
-            }
-        }).start();
-    }
-
-
-    private Status getStatus() {
-        Status status = parseBasicStatus(post(basicStatus()));
-        parseRadioStatus(post(radioStatus()), status);
-        return status;
-    }
-
-    private void sleep(int seconds) {
-        try {
-            Thread.sleep(seconds * 1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void asyncVolume(final VolumeOperation op, final Integer dB) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                volume(op, dB);
-            }
-        }).start();
-
     }
 }
